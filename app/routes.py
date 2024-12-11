@@ -65,9 +65,8 @@ def home():
 
     # Create hover text with shot distance
     shots_df["SHOT_RESULT"] = shots_df["SHOT_MADE_FLAG"].map({1: "Made", 0: "Missed"})
-    shots_df["HOVER_TEXT"] = shots_df.apply(
-        lambda row: f"Distance: {row['SHOT_DISTANCE']}ft<br>{row['SHOT_RESULT']} Shot",
-        axis=1,
+    shots_df["HOVER_TEXT"] = (
+        shots_df["SHOT_DISTANCE"].astype(str) + "ft - " + shots_df["SHOT_RESULT"]
     )
 
     # Update title to include game info if selected
@@ -89,17 +88,20 @@ def home():
         },
         title=title,
         custom_data=["HOVER_TEXT"],
+        hover_data=None,  # Disable default hover data
     )
 
-    # Update markers - ensure made shots are green circles and missed shots are red X's
+    # Update markers and hover template
     fig.update_traces(
         selector=dict(name="Made"),
         marker=dict(symbol="circle", size=12, line=dict(width=1, color="white")),
+        hovertemplate="%{customdata[0]}<extra></extra>",  # Show only custom hover text
     )
 
     fig.update_traces(
         selector=dict(name="Missed"),
         marker=dict(symbol="x", size=8, line=dict(width=1, color="white")),
+        hovertemplate="%{customdata[0]}<extra></extra>",  # Show only custom hover text
     )
 
     # Clean up layout
