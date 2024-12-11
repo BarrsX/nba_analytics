@@ -77,26 +77,29 @@ def home():
         if game:
             title += f" - {game['display']}"
 
+    # Create scatter plot
     fig = px.scatter(
         shots_df,
         x="LOC_X",
         y="LOC_Y",
         color="SHOT_RESULT",
-        color_discrete_map={"Made": "#2ecc71", "Missed": "#e74c3c"},  # Green  # Red
+        color_discrete_map={
+            "Made": "#2ecc71",  # Green for made shots
+            "Missed": "#e74c3c",  # Red for missed shots
+        },
         title=title,
         custom_data=["HOVER_TEXT"],
     )
 
-    # Update markers
+    # Update markers - ensure made shots are green circles and missed shots are red X's
     fig.update_traces(
-        marker=dict(
-            symbol=[
-                "circle" if made == 1 else "x" for made in shots_df["SHOT_MADE_FLAG"]
-            ],
-            size=10,
-            line=dict(width=1, color="white"),
-        ),
-        hovertemplate="%{customdata[0]}<extra></extra>",
+        selector=dict(name="Made"),
+        marker=dict(symbol="circle", size=12, line=dict(width=1, color="white")),
+    )
+
+    fig.update_traces(
+        selector=dict(name="Missed"),
+        marker=dict(symbol="x", size=8, line=dict(width=1, color="white")),
     )
 
     # Clean up layout
