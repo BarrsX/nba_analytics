@@ -51,3 +51,31 @@ export FLASK_ENV=development
 # Run the application
 flask run
 ```
+
+## Usage
+
+1. Access the application at `http://localhost:5000`
+2. Select a player from the dropdown menu
+3. Choose a season from available options
+4. Optionally filter by specific games
+5. View the generated shot chart and statistics
+
+## Development
+
+To contribute to the project:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- NBA API for providing the statistics
+- Flask community for the excellent framework
+- Contributors and users of the application
