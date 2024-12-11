@@ -1,0 +1,201 @@
+/* Base styles */
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+h1 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 2rem;
+    font-size: 2.5rem;
+}
+
+.player-form {
+    margin: 2rem 0;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+/* Button styles */
+button {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #1d4ed8;
+}
+
+/* Table styles */
+table {
+    width: 100%;
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    font-feature-settings: "tnum";
+}
+
+th, td {
+    padding: 16px 20px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+}
+
+th {
+    background-color: #2d2d2d;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    border-bottom: 2px solid #333;
+}
+
+td {
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+    color: #e0e0e0;
+    line-height: 1.5;
+}
+
+td:nth-child(2), 
+td:nth-child(3) {
+    text-align: right;
+    font-family: 'JetBrains Mono', 'Inter', monospace;
+    font-feature-settings: "tnum" 1;
+}
+
+tbody tr:hover {
+    background-color: #252525;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tbody tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+td:nth-child(3)::after {
+    content: '%';
+    opacity: 0.5;
+    margin-left: 2px;
+}
+
+td:first-child {
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.stats-table tr:nth-last-child(-n+2) {
+    font-weight: 600;
+    border-top: 2px solid #333;
+}
+
+.stats-table tr:nth-last-child(-n+2) td {
+    color: #ffffff;
+}
+
+/* Select2 Custom Theme */
+.select2-container--custom {
+    margin: 0;
+}
+
+.select2-container--custom .select2-selection--single {
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 6px;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center;
+}
+
+.select2-container--custom .select2-selection--single .select2-selection__rendered {
+    color: #e0e0e0;
+    padding-left: 10px;
+    line-height: normal;
+}
+
+.select2-container--custom .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+    position: absolute;
+    right: 10px;
+    top: 0;
+    display: flex;
+    align-items: center;
+}
+
+.select2-container--custom .select2-dropdown {
+    margin-top: 2px;
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 6px;
+}
+
+.select2-container--custom .select2-results__option {
+    padding: 8px 10px;
+    color: #e0e0e0;
+}
+
+.select2-container--custom .select2-results__option--highlighted[aria-selected] {
+    background-color: #2563eb;
+    color: white;
+}
+
+.select2-container--custom .select2-results__option[aria-selected=true] {
+    background-color: #374151;
+}
+
+.select2-container--custom .select2-search--dropdown .select2-search__field {
+    background-color: #2d2d2d;
+    border: 1px solid #333;
+    color: #e0e0e0;
+    border-radius: 4px;
+    padding: 6px 10px;
+}
+
+.select2-container--custom .select2-results > .select2-results__options {
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #666 #1e1e1e;
+}
+
+/* Select2 widths */
+#player + .select2-container {
+    min-width: 400px;
+}
+
+#season + .select2-container {
+    min-width: 200px;
+}
+
+#game + .select2-container {
+    min-width: 400px;
+}

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>NBA Shot Chart</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>NBA Shot Chart Analysis</h1>
+
+      <form method="GET" class="player-form">
+        <div class="input-group">
+          <select name="player" id="player" class="select-input player-select">
+            <option value="">Search player...</option>
+            {% for player in players %}
+              <option value="{{ player.full_name }}" 
+                      {% if player.full_name == selected_player %}selected{% endif %}>
+                {{ player.full_name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="input-group">
+          <select name="season" id="season" class="select-input season-select">
+            <option value="">Select season...</option>
+            {% for season in seasons %}
+              <option value="{{ season }}"
+                      {% if season == selected_season %}selected{% endif %}>
+                {{ season }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="input-group">
+          <select name="game" id="game" class="select-input game-select">
+            <option value="">All Games</option>
+            {% for game in games %}
+              <option value="{{ game.id }}"
+                      {% if game.id == selected_game %}selected{% endif %}>
+                {{ game.display }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="submit">Show Shot Chart</button>
+      </form>
+
+      <!-- Display the plotly shot chart -->
+      {{ plot | safe }}
+
+      <!-- Display the zone statistics -->
+      {{ stats | safe }}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+      // Initialize Select2
+      $(document).ready(function() {
+        $('.select-input').select2({
+          theme: 'custom',
+          width: '100%',
+          placeholder: function() {
+            return $(this).attr('placeholder');
+          },
+          allowClear: true
+        });
+
+        // When player selection changes
+        $('#player').on('change', function() {
+          const playerName = this.value;
+          if (playerName) {
+            fetch(`/get_seasons/${encodeURIComponent(playerName)}`)
+              .then(response => response.json())
+              .then(data => {
+                const seasonSelect = $('#season');
+                seasonSelect.empty();
+                
+                data.seasons.forEach(season => {
+                  const option = new Option(season, season);
+                  seasonSelect.append(option);
+                });
+                
+                // Set most recent season as selected
+                if (data.seasons.length) {
+                  seasonSelect.val(data.seasons[0]).trigger('change');
+                }
+              });
+          }
+        });
+
+        // When season selection changes
+        $('#season').on('change', function() {
+          const playerName = $('#player').val();
+          const season = this.value;
+          if (playerName && season) {
+            fetch(`/get_games/${encodeURIComponent(playerName)}/${encodeURIComponent(season)}`)
+              .then(response => response.json())
+              .then(data => {
+                const gameSelect = $('#game');
+                gameSelect.empty();
+                
+                gameSelect.append(new Option('All Games', ''));
+                data.games.forEach(game => {
+                  gameSelect.append(new Option(game.display, game.id));
+                });
+                
+                gameSelect.val('').trigger('change');
+              });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
