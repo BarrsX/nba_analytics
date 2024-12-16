@@ -93,6 +93,14 @@ def home():
         labels={"LOC_X": "", "LOC_Y": ""},  # Remove axis labels
     )
 
+    # Generate filename for downloads
+    filename = f"{player_name.replace(' ', '_')}_{season}"
+    if game_id:
+        game = next((g for g in available_games if g["id"] == game_id), None)
+        if game:
+            filename += f"_{game['date']}"
+    filename += "_shot_chart"
+
     # Add court image as background
     fig.add_layout_image(
         dict(
@@ -109,7 +117,7 @@ def home():
         )
     )
 
-    # Update layout with proper dimensions
+    # Update layout with proper dimensions (remove toImageButtonOptions)
     fig.update_layout(
         showlegend=True,
         legend_title_text="Shot Outcome",
@@ -135,6 +143,16 @@ def home():
         height=700,  # Fixed height
         width=800,  # Fixed width
     )
+
+    # Create custom configuration for downloads
+    config = {
+        "toImageButtonOptions": {
+            "filename": filename,
+            "height": 700,
+            "width": 800,
+            "scale": 2,  # Higher quality image
+        }
+    }
 
     # Update markers and hover template
     fig.update_traces(
@@ -258,9 +276,10 @@ def home():
         else 0
     )
 
+    # Pass the config when converting to HTML
     return render_template(
         "index.html",
-        plot=fig.to_html(),
+        plot=fig.to_html(config=config),  # Add config here
         stats=zone_stats.to_html(classes="stats-table", index=False),
         players=active_players,
         selected_player=player_name,
