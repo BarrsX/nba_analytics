@@ -80,14 +80,14 @@ class ShotChart:
             )
             games_df = game_log.get_data_frames()[0]
 
-            # Format games for dropdown
+            # Format games for dropdown with points
             games = []
             for _, game in games_df.iterrows():
                 game_info = {
                     "id": game["Game_ID"],
                     "date": game["GAME_DATE"],
                     "matchup": game["MATCHUP"],
-                    "display": f"{game['GAME_DATE']} - {game['MATCHUP']}",
+                    "display": f"{game['GAME_DATE']} - {game['MATCHUP']} ({game['PTS']} pts)",
                 }
                 games.append(game_info)
 
