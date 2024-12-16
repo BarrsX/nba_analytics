@@ -124,6 +124,9 @@ def home():
         ),
     )
 
+    # Get number of games for per-game calculations
+    num_games = len(set(shots_df["GAME_ID"])) if not game_id else 1
+
     # Calculate zone statistics with better column names
     zone_stats = (
         shots_df[shots_df["SHOT_ZONE_BASIC"] != "Backcourt"]
@@ -136,25 +139,54 @@ def home():
     ).reset_index()
     zone_stats.columns = ["Zone", "Attempts", "Made", "FG%"]
 
+    # Add per-game stats if showing all games
+    if not game_id:
+        zone_stats["Attempts"] = zone_stats.apply(
+            lambda row: f"{row['Attempts']} ({(row['Attempts']/num_games):.1f}/game)",
+            axis=1,
+        )
+        zone_stats["Made"] = zone_stats.apply(
+            lambda row: f"{row['Made']} ({(row['Made']/num_games):.1f}/game)", axis=1
+        )
+
     # Calculate 2PT and 3PT totals
     two_pt_shots = shots_df[shots_df["SHOT_TYPE"] == "2PT Field Goal"]
     three_pt_shots = shots_df[shots_df["SHOT_TYPE"] == "3PT Field Goal"]
 
-    # Create summary rows for 2PT and 3PT with made shots
-    summary_stats = pd.DataFrame(
-        {
-            "Zone": ["2PT Field Goals", "3PT Field Goals"],
-            "Attempts": [len(two_pt_shots), len(three_pt_shots)],
-            "Made": [
-                two_pt_shots["SHOT_MADE_FLAG"].sum(),
-                three_pt_shots["SHOT_MADE_FLAG"].sum(),
-            ],
-            "FG%": [
-                f"{(two_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
-                f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
-            ],
-        }
-    )
+    # Create summary rows for 2PT and 3PT
+    if not game_id:
+        summary_stats = pd.DataFrame(
+            {
+                "Zone": ["2PT Field Goals", "3PT Field Goals"],
+                "Attempts": [
+                    f"{len(two_pt_shots)} ({(len(two_pt_shots)/num_games):.1f}/game)",
+                    f"{len(three_pt_shots)} ({(len(three_pt_shots)/num_games):.1f}/game)",
+                ],
+                "Made": [
+                    f"{two_pt_shots['SHOT_MADE_FLAG'].sum()} ({(two_pt_shots['SHOT_MADE_FLAG'].sum()/num_games):.1f}/game)",
+                    f"{three_pt_shots['SHOT_MADE_FLAG'].sum()} ({(three_pt_shots['SHOT_MADE_FLAG'].sum()/num_games):.1f}/game)",
+                ],
+                "FG%": [
+                    f"{(two_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
+                    f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
+                ],
+            }
+        )
+    else:
+        summary_stats = pd.DataFrame(
+            {
+                "Zone": ["2PT Field Goals", "3PT Field Goals"],
+                "Attempts": [len(two_pt_shots), len(three_pt_shots)],
+                "Made": [
+                    two_pt_shots["SHOT_MADE_FLAG"].sum(),
+                    three_pt_shots["SHOT_MADE_FLAG"].sum(),
+                ],
+                "FG%": [
+                    f"{(two_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
+                    f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
+                ],
+            }
+        )
 
     # Combine zone stats with summary stats
     zone_stats = pd.concat([zone_stats, summary_stats], ignore_index=True)
