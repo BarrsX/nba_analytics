@@ -56,6 +56,12 @@
         <button type="submit">Show Shot Chart</button>
       </form>
 
+      {% if error_message %}
+      <div class="error-message">
+        {{ error_message }}
+      </div>
+      {% endif %}
+
       <!-- Add shooting summary -->
       <div class="shooting-summary">
         <div class="stat-card">
@@ -82,9 +88,33 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-      // Initialize Select2
       $(document).ready(function() {
-        $('.select-input').select2({
+        // Initialize player select with search configuration
+        $('#player').select2({
+          theme: 'custom',
+          width: '100%',
+          placeholder: 'Search any NBA player...',
+          allowClear: true,
+          minimumInputLength: 2, // Require at least 2 characters to start searching
+          matcher: function(params, data) {
+            // Custom matcher to search both current and former players
+            if (!params.term || params.term.trim() === '') {
+              return data;
+            }
+            
+            const term = params.term.toLowerCase();
+            const text = data.text.toLowerCase();
+            
+            if (text.includes(term)) {
+              return data;
+            }
+            
+            return null;
+          }
+        });
+
+        // Initialize other selects
+        $('#season, #game').select2({
           theme: 'custom',
           width: '100%',
           placeholder: function() {

@@ -23,18 +23,176 @@ def get_games(player_name, season):
 @main.route("/")
 def home():
     player_name = request.args.get("player", "Stephen Curry")
-    season = request.args.get("season", "2023-24")
-    game_id = request.args.get("game", None)  # None means all games
+    season = request.args.get("season", "2015-16")
+    game_id = request.args.get("game", None)
+
+    # Get data availability status and players/seasons lists
+    data_available = ShotChart.is_data_available(season)
+    active_players = ShotChart.get_active_players()
+    available_seasons = ShotChart.get_player_seasons(player_name)
+    available_games = ShotChart.get_player_games(player_name, season)
+
+    # First try to get shot location data
+    shots_df, basic_stats = ShotChart.get_player_shots(player_name, season, game_id)
+
+    # If we have basic stats but no shot locations (pre-1996 season)
+    if shots_df.empty and basic_stats:
+        fig = px.scatter(title=f"{player_name}'s Shot Chart ({season})")
+        fig.update_layout(
+            showlegend=False,
+            xaxis=dict(
+                showgrid=False, zeroline=False, showticklabels=False, showline=False
+            ),
+            yaxis=dict(
+                showgrid=False, zeroline=False, showticklabels=False, showline=False
+            ),
+            paper_bgcolor="#1e1e1e",
+            plot_bgcolor="rgba(0,0,0,0)",
+            height=700,
+            width=800,
+        )
+
+        # Create basic stats table
+        stats_data = {
+            "Zone": ["2PT Field Goals", "3PT Field Goals", "Free Throws"],
+            "Made": [basic_stats["fg2m"], basic_stats["fg3m"], basic_stats["ftm"]],
+            "Attempts": [basic_stats["fg2a"], basic_stats["fg3a"], basic_stats["fta"]],
+            "FG%": [
+                (
+                    f"{(basic_stats['fg2m']/basic_stats['fg2a']*100):.1f}"
+                    if basic_stats["fg2a"] > 0
+                    else "0.0"
+                ),
+                (
+                    f"{(basic_stats['fg3m']/basic_stats['fg3a']*100):.1f}"
+                    if basic_stats["fg3a"] > 0
+                    else "0.0"
+                ),
+                (
+                    f"{(basic_stats['ftm']/basic_stats['fta']*100)::.1f}"
+                    if basic_stats["fta"] > 0
+                    else "0.0"
+                ),
+            ],
+        }
+        zone_stats = pd.DataFrame(stats_data)
+
+        # Calculate totals for pre-1996 seasons
+        total_shots = basic_stats["fg2a"] + basic_stats["fg3a"]
+        total_points = (
+            (basic_stats["fg2m"] * 2) + (basic_stats["fg3m"] * 3) + basic_stats["ftm"]
+        )
+        ts_percent = (
+            (total_points / (2 * (total_shots + 0.44 * basic_stats["fta"]))) * 100
+            if (total_shots + basic_stats["fta"]) > 0
+            else 0
+        )
+
+        return render_template(
+            "index.html",
+            plot=fig.to_html(),
+            stats=zone_stats.to_html(classes="stats-table", index=False),
+            players=active_players,
+            selected_player=player_name,
+            seasons=available_seasons,
+            selected_season=season,
+            games=available_games,
+            selected_game=game_id,
+            ts_percent=f"{ts_percent:.1f}",
+            total_points=total_points,
+            total_shots=total_shots,
+            error_message="Shot location data is not available, showing basic statistics only.",
+        )
+
+    # Add data availability check
+    data_available = ShotChart.is_data_available(season)
+    error_message = (
+        None
+        if data_available
+        else "Shot location data is only available from the 1996-97 season onwards."
+    )
 
     active_players = ShotChart.get_active_players()
     available_seasons = ShotChart.get_player_seasons(player_name)
     available_games = ShotChart.get_player_games(player_name, season)
-    shots_df = ShotChart.get_player_shots(player_name, season, game_id)
+    shots_df, basic_stats = ShotChart.get_player_shots(player_name, season, game_id)
+
+    # Handle pre-1996 seasons with basic stats
+    if shots_df.empty and basic_stats:
+        # Create empty plot with message
+        fig = px.scatter(title=f"{player_name}'s Basic Stats ({season})")
+        fig.update_layout(
+            showlegend=False,
+            xaxis=dict(
+                showgrid=False, zeroline=False, showticklabels=False, showline=False
+            ),
+            yaxis=dict(
+                showgrid=False, zeroline=False, showticklabels=False, showline=False
+            ),
+        )
+
+        # Create basic stats table
+        stats_data = {
+            "Zone": ["2PT Field Goals", "3PT Field Goals", "Free Throws"],
+            "Made": [basic_stats["fg2m"], basic_stats["fg3m"], basic_stats["ftm"]],
+            "Attempts": [basic_stats["fg2a"], basic_stats["fg3a"], basic_stats["fta"]],
+            "FG%": [
+                (
+                    f"{(basic_stats['fg2m']/basic_stats['fg2a']*100):.1f}"
+                    if basic_stats["fg2a"] > 0
+                    else "0.0"
+                ),
+                (
+                    f"{(basic_stats['fg3m']/basic_stats['fg3a']*100):.1f}"
+                    if basic_stats["fg3a"] > 0
+                    else "0.0"
+                ),
+                (
+                    f"{(basic_stats['ftm']/basic_stats['fta']*100):.1f}"
+                    if basic_stats["fta"] > 0
+                    else "0.0"
+                ),
+            ],
+        }
+
+        zone_stats = pd.DataFrame(stats_data)
+
+        # Calculate totals
+        total_shots = basic_stats["fg2a"] + basic_stats["fg3a"]
+        total_points = (
+            (basic_stats["fg2m"] * 2) + (basic_stats["fg3m"] * 3) + basic_stats["ftm"]
+        )
+        ts_percent = (
+            (total_points / (2 * (total_shots + 0.44 * basic_stats["fta"]))) * 100
+            if (total_shots + basic_stats["fta"]) > 0
+            else 0
+        )
+
+        return render_template(
+            "index.html",
+            plot=fig.to_html(),
+            stats=zone_stats.to_html(classes="stats-table", index=False),
+            players=active_players,
+            selected_player=player_name,
+            seasons=available_seasons,
+            selected_season=season,
+            games=available_games,
+            selected_game=game_id,
+            ts_percent=f"{ts_percent:.1f}",
+            total_points=total_points,
+            total_shots=total_shots,
+            error_message="Shot location data is not available, showing basic statistics only.",
+        )
 
     # Check if we have valid shot data
     if shots_df.empty:
         # Create empty plot with message
-        fig = px.scatter(title=f"No shot data available for {player_name} ({season})")
+        message = (
+            error_message
+            if error_message
+            else f"No shot data available for {player_name} ({season})"
+        )
+        fig = px.scatter(title=message)
         fig.update_layout(
             showlegend=False,
             xaxis=dict(
@@ -62,6 +220,7 @@ def home():
             selected_season=season,
             games=available_games,
             selected_game=game_id,
+            error_message=error_message,
         )
 
     # Create hover text with shot distance
@@ -211,7 +370,7 @@ def home():
                 ],
                 "FG%": [
                     f"{(two_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
-                    f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100)::.1f}",
+                    f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
                 ],
             }
         )
@@ -229,7 +388,7 @@ def home():
                 ],
                 "FG%": [
                     f"{(two_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
-                    f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
+                    f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100)::.1f}",
                 ],
             }
         )
