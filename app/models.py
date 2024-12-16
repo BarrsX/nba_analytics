@@ -4,6 +4,8 @@ from nba_api.stats.static import players
 import pandas as pd
 from nba_api.stats.endpoints import commonplayerinfo
 from nba_api.stats.endpoints import playergamelog
+from nba_api.stats.endpoints import playerdashptshots
+from nba_api.stats.endpoints import playercareerstats  # Add this import
 
 
 class ShotChart:

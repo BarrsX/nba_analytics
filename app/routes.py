@@ -130,32 +130,43 @@ def home():
         .groupby("SHOT_ZONE_BASIC")
         .agg(
             Attempts=("SHOT_MADE_FLAG", "count"),
+            Made=("SHOT_MADE_FLAG", "sum"),
             FGPercent=("SHOT_MADE_FLAG", lambda x: f"{(x.mean() * 100):.1f}"),
         )
-    )
+    ).reset_index()
+    zone_stats.columns = ["Zone", "Attempts", "Made", "FG%"]
 
     # Calculate 2PT and 3PT totals
     two_pt_shots = shots_df[shots_df["SHOT_TYPE"] == "2PT Field Goal"]
     three_pt_shots = shots_df[shots_df["SHOT_TYPE"] == "3PT Field Goal"]
 
-    # Create summary rows for 2PT and 3PT
+    # Create summary rows for 2PT and 3PT with made shots
     summary_stats = pd.DataFrame(
         {
+            "Zone": ["2PT Field Goals", "3PT Field Goals"],
             "Attempts": [len(two_pt_shots), len(three_pt_shots)],
-            "FGPercent": [
-                f"{(two_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
-                f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",  # Fixed double colon
+            "Made": [
+                two_pt_shots["SHOT_MADE_FLAG"].sum(),
+                three_pt_shots["SHOT_MADE_FLAG"].sum(),
             ],
-        },
-        index=["2PT Field Goals", "3PT Field Goals"],
+            "FG%": [
+                f"{(two_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
+                f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
+            ],
+        }
     )
 
     # Combine zone stats with summary stats
-    zone_stats = pd.concat([zone_stats, summary_stats])
+    zone_stats = pd.concat([zone_stats, summary_stats], ignore_index=True)
 
-    # Reset index to make the zone names a column and rename columns
-    zone_stats = zone_stats.reset_index()
-    zone_stats.columns = ["Zone", "Attempts", "FG%"]
+    # Calculate totals
+    total_shots = len(shots_df)
+    made_shots = shots_df["SHOT_MADE_FLAG"].sum()
+    total_points = (two_pt_shots["SHOT_MADE_FLAG"].sum() * 2) + (
+        three_pt_shots["SHOT_MADE_FLAG"].sum() * 3
+    )
+    # Simple eFG% instead of TS%
+    ts_percent = (total_points / (2 * total_shots)) * 100 if total_shots > 0 else 0
 
     return render_template(
         "index.html",
@@ -167,4 +178,7 @@ def home():
         selected_season=season,
         games=available_games,
         selected_game=game_id,
+        ts_percent=f"{ts_percent:.1f}",
+        total_points=total_points,
+        total_shots=total_shots,
     )

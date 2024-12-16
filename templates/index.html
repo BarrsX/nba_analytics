@@ -56,6 +56,22 @@
         <button type="submit">Show Shot Chart</button>
       </form>
 
+      <!-- Add shooting summary -->
+      <div class="shooting-summary">
+        <div class="stat-card">
+          <h3>True Shooting %</h3>
+          <div class="stat-value">{{ ts_percent }}%</div>
+        </div>
+        <div class="stat-card">
+          <h3>Total Points</h3>
+          <div class="stat-value">{{ total_points }}</div>
+        </div>
+        <div class="stat-card">
+          <h3>Field Goal Attempts</h3>
+          <div class="stat-value">{{ total_shots }}</div>
+        </div>
+      </div>
+
       <!-- Display the plotly shot chart -->
       {{ plot | safe }}
 
