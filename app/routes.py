@@ -188,17 +188,47 @@ def home():
             }
         )
 
-    # Combine zone stats with summary stats
-    zone_stats = pd.concat([zone_stats, summary_stats], ignore_index=True)
+    # Get free throw data
+    fta, ftm = ShotChart.get_player_free_throws(player_name, season, game_id)
 
-    # Calculate totals
+    # Create free throw row
+    if not game_id:
+        ft_stats = pd.DataFrame(
+            {
+                "Zone": ["Free Throws"],
+                "Attempts": [f"{fta} ({(fta/num_games):.1f}/game)"],
+                "Made": [f"{ftm} ({(ftm/num_games):.1f}/game)"],
+                "FG%": [f"{(ftm/fta * 100):.1f}" if fta > 0 else "0.0"],
+            }
+        )
+    else:
+        ft_stats = pd.DataFrame(
+            {
+                "Zone": ["Free Throws"],
+                "Attempts": [fta],
+                "Made": [ftm],
+                "FG%": [f"{(ftm/fta * 100):.1f}" if fta > 0 else "0.0"],
+            }
+        )
+
+    # Combine all stats
+    zone_stats = pd.concat([zone_stats, summary_stats, ft_stats], ignore_index=True)
+
+    # Calculate final totals
     total_shots = len(shots_df)
     made_shots = shots_df["SHOT_MADE_FLAG"].sum()
-    total_points = (two_pt_shots["SHOT_MADE_FLAG"].sum() * 2) + (
-        three_pt_shots["SHOT_MADE_FLAG"].sum() * 3
+    total_points = (
+        (two_pt_shots["SHOT_MADE_FLAG"].sum() * 2)
+        + (three_pt_shots["SHOT_MADE_FLAG"].sum() * 3)
+        + ftm
     )
-    # Simple eFG% instead of TS%
-    ts_percent = (total_points / (2 * total_shots)) * 100 if total_shots > 0 else 0
+
+    # Calculate True Shooting %
+    ts_percent = (
+        (total_points / (2 * (total_shots + 0.44 * fta))) * 100
+        if (total_shots + fta) > 0
+        else 0
+    )
 
     return render_template(
         "index.html",

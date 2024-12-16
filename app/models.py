@@ -96,3 +96,33 @@ class ShotChart:
         except Exception as e:
             print(f"Error getting player games: {e}")
             return []
+
+    @staticmethod
+    def get_player_free_throws(player_name, season, game_id=None):
+        try:
+            players_list = players.find_players_by_full_name(player_name)
+            if not players_list:
+                return 0, 0  # FTA, FTM
+
+            player_dict = players_list[0]
+            player_id = player_dict["id"]
+
+            # Get game log data
+            game_log = playergamelog.PlayerGameLog(
+                player_id=player_dict["id"], season=season
+            )
+            games_df = game_log.get_data_frames()[0]
+
+            if game_id:
+                # Get specific game stats
+                game_stats = games_df[games_df["Game_ID"] == game_id]
+                if game_stats.empty:
+                    return 0, 0
+                return game_stats["FTA"].iloc[0], game_stats["FTM"].iloc[0]
+            else:
+                # Get season totals
+                return games_df["FTA"].sum(), games_df["FTM"].sum()
+
+        except Exception as e:
+            print(f"Error getting free throws: {e}")
+            return 0, 0
