@@ -1,6 +1,7 @@
 # app/routes.py
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, url_for
 from .models import ShotChart
+from .utils import draw_court  # Add this import
 import plotly.express as px
 import pandas as pd
 
@@ -89,22 +90,26 @@ def home():
         title=title,
         custom_data=["HOVER_TEXT"],
         hover_data=None,  # Disable default hover data
+        labels={"LOC_X": "", "LOC_Y": ""},  # Remove axis labels
     )
 
-    # Update markers and hover template
-    fig.update_traces(
-        selector=dict(name="Made"),
-        marker=dict(symbol="circle", size=12, line=dict(width=1, color="white")),
-        hovertemplate="%{customdata[0]}<extra></extra>",  # Show only custom hover text
+    # Add court image as background
+    fig.add_layout_image(
+        dict(
+            source=url_for("static", filename="images/shot_chart.png"),
+            xref="x",
+            yref="y",
+            x=-250,
+            y=422.5,
+            sizex=500,
+            sizey=470,
+            sizing="stretch",
+            opacity=1,
+            layer="below",
+        )
     )
 
-    fig.update_traces(
-        selector=dict(name="Missed"),
-        marker=dict(symbol="x", size=8, line=dict(width=1, color="white")),
-        hovertemplate="%{customdata[0]}<extra></extra>",  # Show only custom hover text
-    )
-
-    # Clean up layout
+    # Update layout with proper dimensions
     fig.update_layout(
         showlegend=True,
         legend_title_text="Shot Outcome",
@@ -113,15 +118,35 @@ def home():
             zeroline=False,
             showticklabels=False,
             showline=False,
-            title="",
+            range=[-250, 250],  # NBA coordinates are in tenths of feet
+            scaleanchor="y",
+            scaleratio=1,
         ),
         yaxis=dict(
             showgrid=False,
             zeroline=False,
             showticklabels=False,
             showline=False,
-            title="",
+            range=[-47.5, 422.5],  # NBA coordinates are in tenths of feet
         ),
+        paper_bgcolor="#1e1e1e",
+        plot_bgcolor="rgba(0,0,0,0)",  # Transparent background
+        margin=dict(l=0, r=0, t=30, b=0),
+        height=700,  # Fixed height
+        width=800,  # Fixed width
+    )
+
+    # Update markers and hover template
+    fig.update_traces(
+        selector=dict(name="Made"),
+        marker=dict(symbol="circle", size=10, line=dict(width=1, color="white")),
+        hovertemplate="%{customdata[0]}<extra></extra>",  # Show only custom hover text
+    )
+
+    fig.update_traces(
+        selector=dict(name="Missed"),
+        marker=dict(symbol="x", size=10, line=dict(width=1, color="white")),
+        hovertemplate="%{customdata[0]}<extra></extra>",  # Show only custom hover text
     )
 
     # Get number of games for per-game calculations
@@ -168,7 +193,7 @@ def home():
                 ],
                 "FG%": [
                     f"{(two_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
-                    f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
+                    f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",  # Removed extra colon
                 ],
             }
         )
