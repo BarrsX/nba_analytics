@@ -292,3 +292,19 @@ td:first-child {
     font-size: 14px;
     user-select: none;
 }
+
+/* Stats header styling */
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    margin-bottom: -1rem;
+}
+
+.stats-header h2 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+}
