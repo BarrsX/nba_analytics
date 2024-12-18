@@ -80,12 +80,14 @@
       <!-- Add toggle before stats table -->
       <div class="stats-header">
         <h2>Shot Distribution</h2>
+        {% if not selected_game %}
         <div class="toggle-container">
           <label class="toggle">
             <input type="checkbox" id="per36" {% if per36 %}checked{% endif %}>
             <span class="toggle-label">Per 36 Minutes</span>
           </label>
         </div>
+        {% endif %}
       </div>
 
       <!-- Display the zone statistics -->
