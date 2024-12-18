@@ -25,6 +25,7 @@ def home():
     player_name = request.args.get("player", "Stephen Curry")
     season = request.args.get("season", "2023-24")
     game_id = request.args.get("game", None)  # None means all games
+    per36 = request.args.get("per36") == "on"  # Add this line
 
     active_players = ShotChart.get_active_players()
     available_seasons = ShotChart.get_player_seasons(player_name)
@@ -186,35 +187,83 @@ def home():
     ).reset_index()
     zone_stats.columns = ["Zone", "Made", "Attempts", "FG%"]
 
-    # Add per-game stats if showing all games
+    # Get minutes played data when showing season stats
     if not game_id:
-        zone_stats["Made"] = zone_stats.apply(
-            lambda row: f"{row['Made']} ({(row['Made']/num_games):.1f}/game)", axis=1
-        )
-        zone_stats["Attempts"] = zone_stats.apply(
-            lambda row: f"{row['Attempts']} ({(row['Attempts']/num_games):.1f}/game)",
-            axis=1,
-        )
+        total_minutes, games_played = ShotChart.get_player_minutes(player_name, season)
+        print(f"Total minutes: {total_minutes}, Games: {games_played}")
 
-    # Create summary rows for 2PT and 3PT
-    if not game_id:
+        # Calculate minutes per game
+        minutes_per_game = total_minutes / games_played if games_played > 0 else 0
+        print(f"Minutes per game: {minutes_per_game}")
+
+        # Calculate per 36 multiplier
+        if minutes_per_game > 0:
+            per36_multiplier = 36 / minutes_per_game
+            print(f"Per36 multiplier: {per36_multiplier}")
+        else:
+            per36_multiplier = 0
+
+        # Add per-game and per36 stats
+        def format_stats(row, stat_name):
+            value = row[stat_name]
+            per_game = value / num_games
+            per36_value = per_game * per36_multiplier if minutes_per_game > 0 else 0
+
+            # Only show per36 stats if toggle is on and we have valid minutes data
+            if per36 and minutes_per_game > 0:
+                return f"{value} ({per_game:.1f}/game | {per36_value:.1f}/36m)"
+            return f"{value} ({per_game:.1f}/game)"
+
+        # Update both columns for all rows
+        for col in ["Made", "Attempts"]:
+            zone_stats[col] = zone_stats.apply(
+                lambda row: format_stats(row, col), axis=1
+            )
+
+        # Use the same formatting function for summary stats
+        def format_stats_with_per36(
+            value_total, num_games, per36_multiplier, minutes_per_game
+        ):
+            per_game = value_total / num_games
+            per36_value = per_game * per36_multiplier if minutes_per_game > 0 else 0
+
+            # Only show per36 stats if toggle is on and we have valid minutes data
+            if per36 and minutes_per_game > 0:
+                return f"{value_total} ({per_game:.1f}/game | {per36_value:.1f}/36m)"
+            return f"{value_total} ({per_game:.1f}/game)"
+
+        # Create summary rows for 2PT and 3PT with per36 stats
+        two_pt_made = two_pt_shots["SHOT_MADE_FLAG"].sum()
+        two_pt_attempts = len(two_pt_shots)
+        three_pt_made = three_pt_shots["SHOT_MADE_FLAG"].sum()
+        three_pt_attempts = len(three_pt_shots)
+
         summary_stats = pd.DataFrame(
             {
                 "Zone": ["2PT Field Goals", "3PT Field Goals"],
                 "Made": [
-                    f"{two_pt_shots['SHOT_MADE_FLAG'].sum()} ({(two_pt_shots['SHOT_MADE_FLAG'].sum()/num_games):.1f}/game)",
-                    f"{three_pt_shots['SHOT_MADE_FLAG'].sum()} ({(three_pt_shots['SHOT_MADE_FLAG'].sum()/num_games):.1f}/game)",
+                    format_stats_with_per36(
+                        two_pt_made, num_games, per36_multiplier, minutes_per_game
+                    ),
+                    format_stats_with_per36(
+                        three_pt_made, num_games, per36_multiplier, minutes_per_game
+                    ),
                 ],
                 "Attempts": [
-                    f"{len(two_pt_shots)} ({(len(two_pt_shots)/num_games):.1f}/game)",
-                    f"{len(three_pt_shots)} ({(len(three_pt_shots)/num_games):.1f}/game)",
+                    format_stats_with_per36(
+                        two_pt_attempts, num_games, per36_multiplier, minutes_per_game
+                    ),
+                    format_stats_with_per36(
+                        three_pt_attempts, num_games, per36_multiplier, minutes_per_game
+                    ),
                 ],
                 "FG%": [
                     f"{(two_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
-                    f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100)::.1f}",
+                    f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
                 ],
             }
         )
+
     else:
         summary_stats = pd.DataFrame(
             {
@@ -228,8 +277,8 @@ def home():
                     len(three_pt_shots),
                 ],
                 "FG%": [
-                    f"{(two_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
-                    f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
+                    f"{(two_pt_shots['SHOT_MADE_FLAG'].mean() * 100)::.1f}",
+                    f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100)::.1f}",
                 ],
             }
         )
@@ -253,7 +302,7 @@ def home():
                 "Zone": ["Free Throws"],
                 "Made": [ftm],
                 "Attempts": [fta],
-                "FG%": [f"{(ftm/fta * 100):.1f}" if fta > 0 else "0.0"],
+                "FG%": [f"{(ftm/fta * 100)::.1f}" if fta > 0 else "0.0"],
             }
         )
 
@@ -279,14 +328,29 @@ def home():
     # Pass the config when converting to HTML
     return render_template(
         "index.html",
-        plot=fig.to_html(config=config),  # Add config here
-        stats=zone_stats.to_html(classes="stats-table", index=False),
+        plot=fig.to_html(config=config),
+        stats=zone_stats.to_html(
+            classes="stats-table",
+            index=False,
+            escape=False,
+            formatters={
+                "Zone": lambda x: (
+                    x
+                    if "Field Goals" not in x
+                    else f'<span class="field-goal-type">{x}</span>'
+                ),
+                "Made": lambda x: str(x),
+                "Attempts": lambda x: str(x),
+                "FG%": lambda x: str(x),
+            },
+        ),
         players=active_players,
         selected_player=player_name,
         seasons=available_seasons,
         selected_season=season,
         games=available_games,
         selected_game=game_id,
+        per36=per36,  # Add this line
         ts_percent=f"{ts_percent:.1f}",
         total_points=total_points,
         total_shots=total_shots,

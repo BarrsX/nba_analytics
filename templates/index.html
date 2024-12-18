@@ -53,6 +53,13 @@
           </select>
         </div>
 
+        <div class="toggle-container">
+          <label class="toggle">
+            <input type="checkbox" name="per36" id="per36" {% if per36 %}checked{% endif %}>
+            <span class="toggle-label">Per 36 Minutes</span>
+          </label>
+        </div>
+
         <button type="submit">Show Shot Chart</button>
       </form>
 
@@ -135,6 +142,11 @@
                 gameSelect.val('').trigger('change');
               });
           }
+        });
+
+        // Handle per36 toggle
+        $('#per36').on('change', function() {
+          $(this).closest('form').submit();
         });
       });
     </script>

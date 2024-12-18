@@ -128,6 +128,12 @@ td:first-child {
     color: #ffffff;
 }
 
+/* Update styling for field goal rows */
+.stats-table tr:has(.field-goal-type) td {
+    font-weight: 600;
+    color: #ffffff;
+}
+
 /* Select2 Custom Theme */
 .select2-container--custom {
     margin: 0;
@@ -235,4 +241,54 @@ td:first-child {
     font-weight: bold;
     margin-top: 8px;
     color: #2c3e50;
+}
+
+/* Toggle styles */
+.toggle-container {
+    display: flex;
+    align-items: center;
+}
+
+.toggle {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.toggle input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 40px;
+    height: 20px;
+    background: #374151;
+    border-radius: 20px;
+    position: relative;
+    margin-right: 8px;
+    transition: background 0.3s;
+}
+
+.toggle input[type="checkbox"]:checked {
+    background: #2563eb;
+}
+
+.toggle input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s;
+}
+
+.toggle input[type="checkbox"]:checked::before {
+    transform: translateX(20px);
+}
+
+.toggle-label {
+    color: #e0e0e0;
+    font-size: 14px;
+    user-select: none;
 }

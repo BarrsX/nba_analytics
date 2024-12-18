@@ -6,6 +6,7 @@ from nba_api.stats.endpoints import commonplayerinfo
 from nba_api.stats.endpoints import playergamelog
 from nba_api.stats.endpoints import playerdashptshots
 from nba_api.stats.endpoints import playercareerstats  # Add this import
+from nba_api.stats.endpoints import leaguedashplayerstats  # Add this import
 
 
 class ShotChart:
@@ -125,4 +126,38 @@ class ShotChart:
 
         except Exception as e:
             print(f"Error getting free throws: {e}")
+            return 0, 0
+
+    @staticmethod
+    def get_player_minutes(player_name, season):
+        try:
+            players_list = players.find_players_by_full_name(player_name)
+            if not players_list:
+                return 0
+
+            player_dict = players_list[0]
+
+            # Get game log data
+            game_log = playergamelog.PlayerGameLog(
+                player_id=player_dict["id"], season=season
+            )
+            games_df = game_log.get_data_frames()[0]
+
+            # Convert minutes from "MM:SS" format to decimal minutes
+            total_minutes = 0
+            for min_str in games_df["MIN"]:
+                try:
+                    if ":" in str(min_str):
+                        mins, secs = map(int, str(min_str).split(":"))
+                        total_minutes += mins + (secs / 60)
+                    else:
+                        total_minutes += float(min_str)
+                except (ValueError, AttributeError):
+                    continue
+
+            print(f"Total minutes: {total_minutes}, Games played: {len(games_df)}")
+            return total_minutes, len(games_df)
+
+        except Exception as e:
+            print(f"Error getting player minutes: {e}")
             return 0, 0
