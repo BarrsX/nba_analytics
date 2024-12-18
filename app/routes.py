@@ -277,8 +277,8 @@ def home():
                     len(three_pt_shots),
                 ],
                 "FG%": [
-                    f"{(two_pt_shots['SHOT_MADE_FLAG'].mean() * 100)::.1f}",
-                    f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100)::.1f}",
+                    f"{(two_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
+                    f"{(three_pt_shots['SHOT_MADE_FLAG'].mean() * 100):.1f}",
                 ],
             }
         )
@@ -302,7 +302,7 @@ def home():
                 "Zone": ["Free Throws"],
                 "Made": [ftm],
                 "Attempts": [fta],
-                "FG%": [f"{(ftm/fta * 100)::.1f}" if fta > 0 else "0.0"],
+                "FG%": [f"{(ftm/fta * 100):.1f}" if fta > 0 else "0.0"],
             }
         )
 
