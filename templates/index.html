@@ -53,6 +53,8 @@
           </select>
         </div>
 
+        <!-- Add hidden input for per36 -->
+        <input type="hidden" name="per36" id="per36_input">
         <button type="submit">Show Shot Chart</button>
       </form>
 
@@ -80,6 +82,19 @@
 
       <!-- Display the plotly shot chart -->
       {{ plot | safe }}
+
+      <!-- Add toggle before stats table -->
+      <div class="stats-header">
+        <h2>Shot Distribution</h2>
+        {% if not selected_game %}
+        <div class="toggle-container">
+          <label class="toggle">
+            <input type="checkbox" id="per36" {% if per36 %}checked{% endif %}>
+            <span class="toggle-label">Per 36 Minutes</span>
+          </label>
+        </div>
+        {% endif %}
+      </div>
 
       <!-- Display the zone statistics -->
       {{ stats | safe }}
@@ -165,6 +180,22 @@
                 gameSelect.val('').trigger('change');
               });
           }
+        });
+
+        // Update per36 toggle handler
+        $('#per36').on('change', function() {
+          // Update hidden input
+          $('#per36_input').val(this.checked ? 'on' : '');
+          // Get current URL parameters
+          const urlParams = new URLSearchParams(window.location.search);
+          // Update parameters
+          if (this.checked) {
+            urlParams.set('per36', 'on');
+          } else {
+            urlParams.delete('per36');
+          }
+          // Maintain other parameters and reload
+          window.location.search = urlParams.toString();
         });
       });
     </script>
